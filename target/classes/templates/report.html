@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" th:href="@{/css/styles.css}" />
+  <title>Zestawienie</title>
+</head>
+<header>
+  Aplikacja do zarządzania budżetem
+</header>
+<body>
+<canvas id="myChart" width="400" height="200"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('myChart');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [[${#lists.newArray(report.keySet())}]],
+            datasets: [{
+                label: 'Bilans miesięczny',
+                data: [[${#lists.newArray(report.values())}]],
+                backgroundColor: 'rgba(75, 192, 192, 0.5)'
+            }]
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <title>Aplikacja do zarządzania budżetem</title>
+</head>
+<header>
+    Aplikacja do zarządzania budżetem
+</header>
+<body>
+<h1>Bilans: <span th:text="${balance}">0.0</span></h1>
+
+<h2>Dodaj nową transakcję</h2>
+<form th:action="@{/budget/add}" method="post" th:object="${transaction}">
+    Opis: <input type="text" th:field="*{description}" /><br>
+    Kwota: <input type="number" step="0.01" th:field="*{amount}" /><br>
+    Typ:
+    <select th:field="*{type}">
+        <option th:value="INCOME">Przychód</option>
+        <option th:value="EXPENSE">Wydatek</option>
+    </select><br>
+    Kategoria:
+    <select th:field="*{category}">
+        <option value="" disabled selected>Wybierz kategorię</option>
+        <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
+    </select>
+    <button type="submit">Dodaj</button>
+</form>
+
+<h2>Lista transakcji</h2>
+
+<form th:action="@{/budget/filter}" method="get">
+    <label>Typ transakcji:</label>
+    <select name="type">
+        <option value="">Wszystkie</option>
+        <option value="INCOME">Przychód</option>
+        <option value="EXPENSE">Wydatek</option>
+    </select>
+
+    <label>Kategoria:</label>
+    <input type="text" name="category" placeholder="np. Jedzenie" />
+
+    <button type="submit">Filtruj</button>
+</form>
+
+<ul>
+    <li th:each="t : ${transactions}">
+        <span th:text="${t.type}">Typ</span> -
+        <span th:text="${t.description}">Opis</span> :
+        <span th:text="${t.amount} + ' zł'">Kwota</span> |
+        <b>Kategoria:</b> <span th:text="${t.category}">Kategoria</span>
+        <form th:action="@{/delete/{id}(id=${t.id})}" method="post" style="display:inline;">
+            <button type="submit">Usuń</button>
+        </form>
+    </li>
+</ul>
+</body>
+</html>
