@@ -19,8 +19,9 @@ public class Transaction {
     private double amount;
     @Column(nullable = false)
     private String description;
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String category;
+    private TransactionCategory category;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -34,5 +35,13 @@ public class Transaction {
     public enum TransactionType {
         INCOME,
         EXPENSE
+    }
+    public enum TransactionCategory {
+        FOOD,
+        TRANSPORT,
+        ENTERTAINMENT,
+        OTHER,
+        SALARY,
+
     }
 }

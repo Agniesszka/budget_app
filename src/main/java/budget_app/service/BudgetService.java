@@ -1,7 +1,7 @@
 package budget_app.service;
 
-import budget_app.DAO.IBudgetDAO;
-import budget_app.DAO.ITransactionDAO;
+import budget_app.DAO.BudgetRepository;
+import budget_app.DAO.TransactionRepository;
 import budget_app.model.Budget;
 import budget_app.model.Transaction;
 import budget_app.model.Transaction.TransactionType;
@@ -9,24 +9,25 @@ import budget_app.model.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
 @Service
 public class BudgetService implements IBudgetService {
 
-    private final IBudgetDAO budgetDAO;
-    private final ITransactionDAO transactionDAO;
+    private final BudgetRepository budgetRepository;
+    private final TransactionRepository transactionRepository;
 
-    public BudgetService(IBudgetDAO budgetDAO, ITransactionDAO transactionDAO) {
-        this.budgetDAO = budgetDAO;
-        this.transactionDAO = transactionDAO;
+    public BudgetService(BudgetRepository budgetRepository, TransactionRepository transactionRepository) {
+        this.budgetRepository = budgetRepository;
+        this.transactionRepository = transactionRepository;
     }
 
-    @Override
+    @Transactional
     public void addTransaction(Transaction transaction) {
-        Budget budget = budgetDAO.getBudget();
+        Budget budget = getBudget();
 
         if (transaction.getType() == TransactionType.INCOME) {
             budget.setTotalIncome(budget.getTotalIncome() + transaction.getAmount());
@@ -34,51 +35,43 @@ public class BudgetService implements IBudgetService {
             budget.setTotalExpense(budget.getTotalExpense() + transaction.getAmount());
         }
 
-        transactionDAO.save(transaction);
-        budgetDAO.saveOrUpdate(budget);
+        transactionRepository.save(transaction);
+        budgetRepository.save(budget);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public double getBalance() {
-        Budget budget = getBudget();
-        return budget.getBalance();
+        return getBudget().getBalance();
     }
 
-    @Override
     @Transactional(readOnly = true)
     public List<Transaction> getAllTransactionsByUser(User user) {
-        return transactionDAO.findByUser(user);
-    }
-    @Override
-    public List<Transaction> filterTransactions(String type, String category, User user) {
-        List<Transaction> all = transactionDAO.findByUser(user);
+        return transactionRepository.findByUser(user); }
 
-        return all.stream()
-                .filter(t -> (type == null || type.isEmpty() || t.getType().name().equalsIgnoreCase(type)))
-                .filter(t -> (category == null || category.isEmpty() || t.getCategory().equalsIgnoreCase(category)))
+
+    @Transactional(readOnly = true)
+    public List<Transaction> filterTransactions(TransactionType type,
+                                                Transaction.TransactionCategory category,
+                                                LocalDate startDate,
+                                                LocalDate endDate,
+                                                User user) {
+        return transactionRepository.findByUser(user).stream()
+                .filter(t -> type == null || t.getType() == type)
+                .filter(t -> category == null || t.getCategory() == category)
+                .filter(t -> startDate == null || !t.getDate().isBefore(startDate))
+                .filter(t -> endDate == null || !t.getDate().isAfter(endDate))
                 .collect(Collectors.toList());
     }
 
-    @Override
     public double calculateBalance(List<Transaction> transactions) {
         return transactions.stream()
-                .mapToDouble(t -> {
-                    switch (t.getType()) {
-                        case INCOME:
-                            return t.getAmount();
-                        case EXPENSE:
-                            return -t.getAmount();
-                        default:
-                            return 0.0;
-                    }
-                })
+                .mapToDouble(t -> t.getType() == TransactionType.INCOME ? t.getAmount() : -t.getAmount())
                 .sum();
     }
 
-    @Override
+    @Transactional(readOnly = true)
     public Map<String, Double> getMonthlyReport(User user) {
-        List<Transaction> transactions = transactionDAO.findByUser(user);
+        List<Transaction> transactions = transactionRepository.findByUser(user);
         if (transactions.isEmpty()) {
             return Map.of();
         }
@@ -86,40 +79,35 @@ public class BudgetService implements IBudgetService {
         return transactions.stream()
                 .collect(Collectors.groupingBy(
                         t -> t.getDate().getMonth().toString() + " " + t.getDate().getYear(),
-                        Collectors.summingDouble(t -> {
-                            switch (t.getType()) {
-                                case INCOME:
-                                    return t.getAmount();
-                                case EXPENSE:
-                                    return -t.getAmount();
-                                default:
-                                    return 0.0;
-                            }
-                        })
+                        Collectors.summingDouble(t -> t.getType() == TransactionType.INCOME ? t.getAmount() : -t.getAmount())
                 ));
     }
-    @Override
+
     @Transactional(readOnly = true)
     public Budget getBudget() {
-        return budgetDAO.getBudget();
+        List<Budget> budgets = budgetRepository.findAll();
+        if (budgets.isEmpty()) {
+            Budget newBudget = new Budget();
+            budgetRepository.save(newBudget);
+            return newBudget;
+        } else {
+            return budgets.get(0);
+        }
     }
-    @Override
+
     @Transactional
     public void deleteTransactionByIdAndUser(Long id, User user) {
-        Optional<Transaction> optionalTransaction = transactionDAO.findById(id);
-        if (optionalTransaction.isPresent()) {
-            Transaction transaction = optionalTransaction.get();
+        transactionRepository.findById(id).ifPresent(transaction -> {
             if (transaction.getUser().getId().equals(user.getId())) {
-                Budget budget = budgetDAO.getBudget();
+                Budget budget = getBudget();
                 if (transaction.getType() == TransactionType.INCOME) {
                     budget.setTotalIncome(budget.getTotalIncome() - transaction.getAmount());
                 } else {
                     budget.setTotalExpense(budget.getTotalExpense() - transaction.getAmount());
                 }
-                transactionDAO.delete(transaction);
-                budgetDAO.saveOrUpdate(budget);
+                transactionRepository.delete(transaction);
+                budgetRepository.save(budget);
             }
-        }
+        });
     }
-
 }

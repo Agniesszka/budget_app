@@ -1,29 +1,76 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" />
   <title>Zestawienie</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
-<header>
-  Aplikacja do zarządzania budżetem
-</header>
 <body>
-<canvas id="myChart" width="400" height="200"></canvas>
+<header>
+  <div class="container">
+    Zarządzaj swoim budżetem!
+  </div>
+  <div class="container">
+    <a th:href="@{/budget}" >Budżet</a>
+    <a th:href="@{/budget/report}">Raport</a>
+    <a th:href="@{/logout}">Wyloguj</a>
+  </div>
+</header>
+
+<main>
+  <h2>Zestawienie miesięczne</h2>
+  <canvas id="myChart" width="400" height="200"></canvas>
+</main>
+
+<footer>
+  <div class="container">
+    &copy; 2025 Aplikacja do zarządzania budżetem - Wszelkie prawa zastrzeżone
+  </div>
+</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const ctx = document.getElementById('myChart');
-    const chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [[${#lists.newArray(report.keySet())}]],
-            datasets: [{
-                label: 'Bilans miesięczny',
-                data: [[${#lists.newArray(report.values())}]],
-                backgroundColor: 'rgba(75, 192, 192, 0.5)'
-            }]
-        }
-    });
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  const ctx = document.getElementById('myChart');
+
+  // Pobieramy listy z kontrolera
+  const labels = [[${labels}]];
+  const values = [[${values}]];
+
+  const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: labels,
+          datasets: [{
+              label: 'Bilans miesięczny',
+              data: values,
+              backgroundColor: 'rgba(75, 192, 192, 0.5)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  labels: {
+                      font: { size: 14 }
+                  }
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  ticks: {
+                      callback: function(value) {
+                          return value + ' zł';
+                      }
+                  }
+              }
+          }
+      }
+  });
+  /*]]>*/
 </script>
 </body>
 </html>

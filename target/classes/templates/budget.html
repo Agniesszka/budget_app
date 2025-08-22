@@ -1,59 +1,96 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" th:href="@{/css/styles.css}" />
     <title>Aplikacja do zarządzania budżetem</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
-<header>
-    Aplikacja do zarządzania budżetem
-</header>
 <body>
-<h1>Bilans: <span th:text="${balance}">0.0</span></h1>
+<header>
+    <div class="container">
+    Zarządzaj swoim budżetem!
+    </div>
+    <div class="container">
+        <a th:href="@{/budget}" >Budżet</a>
+        <a th:href="@{/budget/report}">Raport</a>
+        <a th:href="@{/logout}">Wyloguj</a>
+    </div>
+</header>
 
-<h2>Dodaj nową transakcję</h2>
-<form th:action="@{/budget/add}" method="post" th:object="${transaction}">
-    Opis: <input type="text" th:field="*{description}" /><br>
-    Kwota: <input type="number" step="0.01" th:field="*{amount}" /><br>
-    Typ:
-    <select th:field="*{type}">
-        <option th:value="INCOME">Przychód</option>
-        <option th:value="EXPENSE">Wydatek</option>
-    </select><br>
-    Kategoria:
-    <select th:field="*{category}">
-        <option value="" disabled selected>Wybierz kategorię</option>
-        <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
-    </select>
-    <button type="submit">Dodaj</button>
-</form>
+<main>
+    <h1>Bilans: <span th:text="${balance}">0.0</span> zł</h1>
 
-<h2>Lista transakcji</h2>
+    <!-- Formularz dodawania nowej transakcji -->
+    <h2>Dodaj nową transakcję</h2>
+    <form th:action="@{/budget/add}" method="post" th:object="${transaction}">
+        <label>Opis:</label>
+        <input type="text" th:field="*{description}" />
 
-<form th:action="@{/budget/filter}" method="get">
-    <label>Typ transakcji:</label>
-    <select name="type">
-        <option value="">Wszystkie</option>
-        <option value="INCOME">Przychód</option>
-        <option value="EXPENSE">Wydatek</option>
-    </select>
+        <label>Kwota:</label>
+        <input type="number" step="0.01" th:field="*{amount}" />
 
-    <label>Kategoria:</label>
-    <input type="text" name="category" placeholder="np. Jedzenie" />
+        <label>Typ:</label>
+        <select th:field="*{type}" required>
+            <option th:each="t : ${transactionTypes}" th:value="${t}" th:text="${t}"></option>
+        </select>
 
-    <button type="submit">Filtruj</button>
-</form>
+        <label>Kategoria:</label>
+        <select th:field="*{category}" required>
+            <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
+        </select>
 
-<ul>
-    <li th:each="t : ${transactions}">
-        <span th:text="${t.type}">Typ</span> -
-        <span th:text="${t.description}">Opis</span> :
-        <span th:text="${t.amount} + ' zł'">Kwota</span> |
-        <b>Kategoria:</b> <span th:text="${t.category}">Kategoria</span>
-        <form th:action="@{/delete/{id}(id=${t.id})}" method="post" style="display:inline;">
-            <button type="submit">Usuń</button>
-        </form>
-    </li>
-</ul>
+        <label>Data:</label>
+        <input type="date" th:field="*{date}" />
+
+        <button type="submit">Dodaj</button>
+    </form>
+
+    <!-- Formularz filtrowania transakcji -->
+    <h2>Filtruj transakcje</h2>
+    <form th:action="@{/budget/filter}" method="get">
+        <label>Typ transakcji:</label>
+        <select name="type">
+            <option value="">Wszystkie</option>
+            <option th:each="t : ${transactionTypes}" th:value="${t}" th:text="${t}"></option>
+        </select>
+
+        <label>Kategoria:</label>
+        <select name="category">
+            <option value="">Wszystkie</option>
+            <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
+        </select>
+
+        <label>Od:</label>
+        <input type="date" name="startDate" th:value="${startDate}" />
+
+        <label>Do:</label>
+        <input type="date" name="endDate" th:value="${endDate}" />
+
+        <button type="submit">Filtruj</button>
+    </form>
+
+    <!-- Lista transakcji -->
+    <h2>Lista transakcji</h2>
+    <ul>
+        <li th:each="t : ${transactions}">
+            <div>
+                <span th:text="${t.date}">Data</span> |
+                <span th:text="${t.type}">Typ</span> -
+                <span th:text="${t.description}">Opis</span> :
+                <span th:text="${t.amount} + ' zł'">Kwota</span> |
+                <b>Kategoria:</b> <span th:text="${t.category}">Kategoria</span>
+            </div>
+            <form th:action="@{/budget/delete/{id}(id=${t.id})}" method="post">
+                <button type="submit">Usuń</button>
+            </form>
+        </li>
+    </ul>
+</main>
+
+<footer>
+    <div class="container">
+    &copy; 2025 Aplikacja do zarządzania budżetem - Wszelkie prawa zastrzeżone
+    </div>
+</footer>
 </body>
 </html>

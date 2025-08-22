@@ -6,18 +6,19 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Budget_App" />
+        <module name="budget_app" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="budget-manager" target="17" />
-      <module name="budget_app" target="19" />
+      <module name="Budget_App" target="17" />
       <module name="proba" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="Budget_App" options="-parameters" />
+      <module name="budget_app" options="-parameters" />
     </option>
   </component>
 </project>
